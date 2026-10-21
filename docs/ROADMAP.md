@@ -1,6 +1,6 @@
 # Roadmap
 
-The roadmap was written before application code, with every item marked **planned**. Phase 1 items below are now **implemented and verified** by the checks in VERIFICATION.md on 2026-10-21. Phases 2–4 remain **planned**.
+The roadmap was written before application code, with every item marked **planned**. Phase 1 items below are now **implemented and verified** by the checks in VERIFICATION.md on 2026-10-21. Phase 2 implementation is verified with offline/mock checks; live model quality is not verified. Phases 3–4 remain **planned**.
 
 ## Phase 1 — Validated vertical slice
 
@@ -15,11 +15,14 @@ The roadmap was written before application code, with every item marked **planne
 
 ## Phase 2 — AI generation quality
 
-- **planned**: One server-side provider with protected credentials and strict IR-only response validation.
-- **planned**: Prompt strategy, one bounded repair loop, evaluation corpus and quality metrics.
-- **planned**: Streaming progress with final validation before acceptance.
-- Exit: measured evaluation targets, malformed-output rejection, and secret isolation pass tests.
-- Non-goals: multiple providers, arbitrary generated code, richer editing, production launch.
+- **implemented and verified offline**: One OpenAI adapter, server-only credentials/model/limits, loopback API, capabilities, proxy, bounded requests, dev-grade rate/concurrency controls and metadata-only logging.
+- **implemented and verified offline**: Schema-derived prompt catalog, validated examples, strict JSON parsing, shared Zod acceptance and bounded repair (default 1, hard cap 2). No ID canonicalization.
+- **implemented and verified offline**: Explicit sample/AI mode controls, disabled-state explanation, loading/cancel, structured errors, client revalidation and unchanged persistence/rendering path.
+- **implemented and verified offline**: Thirty-case corpus, deterministic fixture pipeline, structural expectations, baseline comparison, metric math, SDK adapter mocks and canary-secret client-build check. All original Phase 1 tests still pass unchanged.
+- **implementation present; live verification planned**: Manual live runner, ignored incremental results, usage/optional cost estimates and model-quality evaluation. No key/model was available; no live results are claimed.
+- **deferred (not implemented)**: Progress-only SSE. Loading/cancel with one final validated JSON response keeps this phase small; partial IR is never rendered.
+- Exit: Offline vertical slice and safety checks pass. **Live quality exit remains open**: select an accessible model, run live eval, inspect failures and establish measured quality targets before declaring generation quality complete.
+- Non-goals: multiple providers, authentication, database, billing, deployment, production rate limiting, new components, chat editing, richer editing, production launch.
 
 ## Phase 3 — Richer editing
 

@@ -1,10 +1,10 @@
-# Forma — AI Design Studio, Phase 1
+# Forma — AI Design Studio, Phase 2
 
-A local prompt-to-interactive-UI design studio built around a validated JSON intermediate representation (IR). Phase 1 uses a **deterministic sample generator, not AI**: keywords choose one of four templates. It requires no API key, performs no model calls, and does not interpret arbitrary instructions.
+A local prompt-to-interactive-UI studio with a validated JSON intermediate representation (IR) as its source of truth. Choose **Deterministic samples** (four keyword templates, no AI call) or **AI (server)** (one optional OpenAI provider). The model returns IR JSON only. Rendering, editing, persistence and controlled React exports use the same validated design.
 
 ## Requirements and setup
 
-Use **Node 24.x** and npm >=8.15. `.nvmrc` selects Node 24. The original shell had Node 16.17.0 / npm 8.15.0; the implementation uses an installed Node 24.19.0 runtime because the Node-16-compatible development tools had security advisories. See [architecture decisions](docs/ARCHITECTURE.md).
+Use **Node 24.x** and npm >=8.15. `.nvmrc` and package engines enforce this requirement. The default shell on the development machine was Node 16; select Node 24 before running npm. No UI framework, database, or hosted service is required for deterministic mode.
 
 ```sh
 nvm install
@@ -13,38 +13,65 @@ npm ci
 npm run dev
 ```
 
-If you use a different Node manager, select Node 24 with it before running npm. Open the local address printed by Vite (normally http://127.0.0.1:5173).
+With another Node manager, select Node 24 using that manager instead. `npm run dev` starts the TypeScript API server on **127.0.0.1:3001** and Vite on **127.0.0.1:5173** together; stopping it stops both. Vite proxies `/api` to the API. Open http://127.0.0.1:5173. The browser uses same-origin API requests; no permissive CORS is enabled. Without a key the server still starts, reports AI disabled, and templates work normally. `npm run dev:server` and `npm run dev:client` start the two processes separately.
+
+## Optional AI setup
 
 ```sh
-npm test
-npm run lint
-npm run typecheck
-npm run build
+cp .env.example .env
 ```
 
-`npm run format` formats sources and documentation. Build output is in `dist/`. The development server listens on loopback. No production deployment is included.
+Edit `.env` locally: set `OPENAI_API_KEY` and `LLM_MODEL` to a model identifier available to your account that supports the Responses API JSON mode. There is deliberately no default/hardcoded model. Review the [official model catalog](https://developers.openai.com/api/docs/models) and the selected model's capabilities. Restart the dev processes after changing server settings. Never put secrets in a `VITE_*` variable or commit `.env`.
 
-## Environment
+Choose **AI (server)** after availability is detected. AI sends your prompt to OpenAI, may incur costs, and is not deterministic. The accepted design stays browser-local; the prompt and generated IR cross the provider boundary. No live provider generation was verified during implementation because no key/model was configured. Mock-provider tests and offline evaluations are verified separately.
 
-No environment variables are required. `.env.example` documents this. No LLM endpoint exists in Phase 1. Never put secrets in browser-exposed `VITE_*` variables.
+| Environment variable                                       | Default / constraint                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`                                           | Empty disables AI                                                               |
+| `LLM_MODEL`                                                | No default; required with a key                                                 |
+| `API_PORT`                                                 | 3001, 1024–65535; Vite proxy reads the same setting                             |
+| `LLM_MAX_PROMPT_LENGTH`                                    | 4000, 1–8000 characters; UI accepts up to 4000                                  |
+| `LLM_MAX_OUTPUT_TOKENS`                                    | 4096, 256–12000 per attempt                                                     |
+| `LLM_TIMEOUT_MS`                                           | 30000, 100–120000 across generation and all repairs                             |
+| `LLM_REPAIR_ATTEMPTS`                                      | 1, allowed 0–2                                                                  |
+| `LLM_RATE_LIMIT` / `LLM_RATE_WINDOW_MS`                    | 6 per 60000 ms, global in-memory local limit; one active generation             |
+| `LLM_MAX_OUTPUT_BYTES`                                     | 100000, 1000–200000                                                             |
+| `LLM_REPAIR_BYTES`                                         | 12000, 1000–20000; bounded invalid-output excerpt                               |
+| `LLM_SUPPORTS_TEMPERATURE`                                 | false; set true only if the chosen model supports temperature, then 0.2 is sent |
+| `LLM_INPUT_USD_PER_MILLION` / `LLM_OUTPUT_USD_PER_MILLION` | Optional operator-supplied live-eval cost rates                                 |
 
-## Walkthrough
+SDK automatic retries and logging are disabled; `store:false` is requested. Provider errors are returned as safe structured errors, without raw exception text. This is a development server, not a public production API.
 
-1. Enter a prompt and select **Generate sample**. Pricing/plan/subscription keywords select pricing; dashboard/header/overview select the header; contact/message select contact; all other prompts select login. Earlier categories take priority. The same prompt always produces the same validated IR; prompt text is not embedded in designs.
-2. Click any preview element, or use its keyboard-accessible Select button, to select it. Its ID and editable properties appear in the inspector.
-3. Edit text, placeholder, colors, gap, or padding when the selected type supports them. Press Enter or leave a field to apply. Invalid edits show a path-specific error and leave accepted state untouched. Color tokens: `ink`, `muted`, `paper`, `surface`, `accent`, `line`. Spacing tokens: `none`, `xs`, `sm`, `md`, `lg`, `xl`, or a number from 0 to 96.
-4. Changes save to the versioned `forma.design.v1` localStorage key. Reload to restore. Invalid, unknown-version, or unavailable storage produces a visible fallback notice. **Reset to sample** replaces the current design with login and saves it.
-5. Use **JSON** to inspect, copy, or download the current IR. **React** or **Export component** opens controlled TSX output with copy and download. Downloaded components require a React 18+ TypeScript host and contain inline styles, without studio dependencies. Clipboard access may depend on browser permissions; download remains available.
+## Usage
 
-Preview inputs accept local typing; buttons have no application action. Input values are ephemeral, excluded from the IR and exports, and discarded on remount. Generated forms do not authenticate, send messages, subscribe, or persist input values.
+1. Choose a generation mode. AI is disabled with an explanation if the local server has no key or cannot be reached.
+2. Enter a prompt. **Generate sample** uses pricing/plan/subscription keywords first, then dashboard/header/overview, then contact/message, otherwise login. Prompt text is not embedded in sample designs. **Generate with AI** requests validated IR from the server. Loading/cancel controls are visible. Failure or cancellation preserves the existing design; final server responses are revalidated in the client.
+3. Click a preview element (or use its keyboard Select button), then edit supported text, placeholder, color, gap or padding properties. Enter or blur applies an edit. Invalid drafts show path/code errors without replacing accepted state. Color tokens: `ink`, `muted`, `paper`, `surface`, `accent`, `line`. Spacing: 0–96 or `none`, `xs`, `sm`, `md`, `lg`, `xl`.
+4. Accepted changes save to localStorage key `forma.design.v1`. Reload restores through migration/validation. Corruption, unknown versions and unavailable storage fall back visibly. Reset replaces the design with the login sample.
+5. Inspect/copy/download JSON; open React export to copy/download deterministic TSX. Clipboard failures offer download. Generated components require a React 18+ TypeScript host. Preview inputs accept ephemeral local typing; buttons have no application action. These sample forms do not authenticate, subscribe, send messages or persist field values.
 
-## Boundaries and limitations
+## Checks and evaluations
 
-- Five components: Stack, Text, Button, Input, Card. Four templates: login, pricing, dashboard header, contact.
-- No LLM, streaming, repair, arbitrary prompt layout, JSON import/editor, history, drag/reorder, tree panel, multi-select, or generated responsive variants.
-- No authentication, collaboration, billing, database, providers, plugins, image upload, or animation features.
-- One browser-local design; generation and reset replace it. No cross-tab conflict handling. Local storage is neither encrypted nor a backup; export work you want to keep.
-- The studio shell adapts to smaller screens; the generated designs have no breakpoint model.
-- Full security review, CSP deployment headers, observability, accessibility audit, performance budgets, and deployment remain planned. Automated component tests do not substitute for those audits.
+```sh
+npm run build
+npm run lint
+npm run typecheck
+npm test
+npm run format:check
+npm run eval:offline
+npm audit
+```
 
-See [architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), and [verification report](docs/VERIFICATION.md).
+`npm run format` formats files. Build output is in `dist/`; it is the **client only**. There is no production deployment workflow. Tests include server/provider mocks, client AI controls, canary-secret bundle isolation, eval math and all original Phase 1 tests. CI runs formatting, lint, typecheck, tests, offline eval and build; it never calls OpenAI. Workflow YAML was checked locally; remote CI execution has not been observed.
+
+`npm run eval:live` is manual and billable, requires key/model, and writes ignored local results. See [eval documentation](docs/EVALS.md) for the 30-prompt corpus, metrics, synthetic offline results and honest limitations.
+
+## Scope and limitations
+
+Five supported components: Stack, Text, Button, Input, Card. AI can compose only those components; unsupported requests must be approximated and invalid output rejected. No provider-side guarantee replaces Zod. Delimiters reduce prompt ambiguity but do not solve prompt injection; safety comes from validation and inert rendering/export templates.
+
+No progress SSE is implemented; the client waits for a complete validated result. No multiple providers, chat editing, new components, authentication, collaboration, billing, database, uploads, plugins, animations, undo/redo, tree editor, drag/reorder, multi-select or generated responsive variants. The studio shell adapts to small screens, without adding a design breakpoint model.
+
+One unencrypted browser-local design; no backup, cross-tab coordination or import UI. Generation/reset replaces it. Cancellation is best-effort upstream and cannot refund tokens already consumed. In-memory rate limiting is dev-grade and resets on server restart. CSP, production security/accessibility audits, observability, performance budgets and deployment remain planned.
+
+See [architecture and threat model](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [Phase 2 verification](docs/PHASE2-VERIFICATION.md), and the historical [Phase 1 report](docs/VERIFICATION.md).
