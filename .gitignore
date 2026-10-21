@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# JavaScript build artifacts and local secrets
+node_modules/
+dist/
+.env.*
+!.env.example
