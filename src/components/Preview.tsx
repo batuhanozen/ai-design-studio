@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { type Design, type DesignNode, validateDesign } from "../ir/schema";
-import { nodeStyle } from "../ir/styles";
+import { nodeStyle } from "../components/nodeStyle";
 type EntryProps = {
   node: DesignNode;
   style: CSSProperties;

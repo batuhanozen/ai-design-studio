@@ -224,3 +224,6 @@ node_modules/
 dist/
 .env.*
 !.env.example
+
+# Local live evaluation reports (may contain operational metadata)
+evals/results/

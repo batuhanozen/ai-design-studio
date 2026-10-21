@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { type DesignNode, tokens, spacing } from "./schema";
+import { type DesignNode, tokens, spacing } from "../ir/schema";
 export function resolveColor(value: string): string {
   return Object.prototype.hasOwnProperty.call(tokens, value)
     ? tokens[value as keyof typeof tokens]

@@ -1,5 +1,5 @@
 import { type Design, type DesignNode, requireDesign } from "../ir/schema";
-import { nodeStyle } from "../ir/styles";
+import { nodeStyle } from "../components/nodeStyle";
 // JSON literals stay inside JSX expression positions. Escape HTML-significant characters too.
 function literal(value: unknown): string {
   return JSON.stringify(value)

@@ -29,7 +29,10 @@ export const colorSchema = z
       /^#(?:[\da-f]{3}|[\da-f]{6}|[\da-f]{8})$/i.test(value) ||
       Boolean(match && match.slice(1).every((v) => Number(v) <= 255))
     );
-  }, "Use a design color token, hex color, or rgb(0–255, 0–255, 0–255).");
+  }, "Use a design color token, hex color, or rgb(0–255, 0–255, 0–255).")
+  .describe(
+    `A color token (${Object.keys(tokens).join(", ")}), 3/6/8-digit hex, or rgb with integer channels 0–255; no URLs or raw CSS.`,
+  );
 const space = z.union([
   z.number().min(0).max(96),
   z.enum(["none", "xs", "sm", "md", "lg", "xl"]),
@@ -110,7 +113,7 @@ const nodeSchema: z.ZodType<DesignNode> = z.lazy(() =>
     z.object({ id, type: z.literal("Input"), props: inputProps }).strict(),
   ]),
 );
-const designSchema: z.ZodType<Design> = z
+export const designSchema: z.ZodType<Design> = z
   .object({
     schemaVersion: z.literal("1.0.0"),
     id,

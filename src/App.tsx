@@ -4,6 +4,7 @@ import { findNode } from "./ir/edit";
 import { samples } from "./ir/samples";
 import { Preview } from "./components/Preview";
 import { Inspector } from "./components/Inspector";
+import { GenerationForm } from "./components/GenerationForm";
 import { generateDesign } from "./services/generator";
 import { restoreDesign, saveDesign } from "./services/persistence";
 import { downloadFile, exportJSON, exportReact } from "./services/export";
@@ -50,7 +51,7 @@ export default function App() {
           <span className="brand-sub">DESIGN STUDIO</span>
         </a>
         <span className="phase-badge">
-          <i /> LOCAL WORKSPACE · PHASE 01
+          <i /> LOCAL WORKSPACE · PHASE 02
         </span>
         <button className="quiet" onClick={() => replace(samples[0])}>
           Reset to sample
@@ -77,30 +78,11 @@ export default function App() {
             Turn a starting idea into a UI you can explore, edit, and make your
             own.
           </p>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              replace(generateDesign(prompt));
-            }}
-          >
-            <label className="prompt-label" htmlFor="prompt">
-              Describe your interface
-            </label>
-            <textarea
-              id="prompt"
-              maxLength={2000}
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-            />
-            <button className="generate" type="submit">
-              Generate sample <span>↗</span>
-            </button>
-          </form>
-          <p className="generator-note">
-            <span>◈</span> Deterministic sample generator.
-            <br />
-            No AI, API key, or network request.
-          </p>
+          <GenerationForm
+            prompt={prompt}
+            onPrompt={setPrompt}
+            onDesign={replace}
+          />
           <div className="divider" />
           <div className="section-label">A LITTLE INSPIRATION</div>
           <div className="sample-list">
@@ -138,7 +120,7 @@ export default function App() {
           </div>
           <div className="local-note">
             <span className="local-dot" />
-            Your work stays in this browser.
+            Designs are saved in this browser.
             <small>Saved locally after each change.</small>
           </div>
         </aside>
@@ -176,7 +158,7 @@ export default function App() {
               <>
                 <div className="artboard-label">
                   <span>{design.name}</span>
-                  <span>SAMPLE / {design.id.toUpperCase()}</span>
+                  <span>DESIGN / {design.id.toUpperCase()}</span>
                 </div>
                 <div className="artboard">
                   <Preview
