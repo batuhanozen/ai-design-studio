@@ -1,6 +1,6 @@
-# Forma — AI Design Studio, Phase 2
+# Forma — AI Design Studio, Phase 3
 
-A local prompt-to-interactive-UI studio with a validated JSON intermediate representation (IR) as its source of truth. Choose **Deterministic samples** (four keyword templates, no AI call) or **AI (server)** (one optional OpenAI provider). The model returns IR JSON only. Rendering, editing, persistence and controlled React exports use the same validated design.
+A local prompt-to-interactive-UI studio with a validated JSON intermediate representation (IR) as its source of truth. Choose **Deterministic samples** (four keyword templates, no AI call) or **AI (server)** (one optional OpenAI provider). The model returns IR JSON only. Rendering, editing, persistence and controlled React exports use the same validated design. Phase 3 adds a component tree, structural editing and bounded undo/redo without changing the five-component IR.
 
 ## Requirements and setup
 
@@ -23,7 +23,7 @@ cp .env.example .env
 
 Edit `.env` locally: set `OPENAI_API_KEY` and `LLM_MODEL` to a model identifier available to your account that supports the Responses API JSON mode. There is deliberately no default/hardcoded model. Review the [official model catalog](https://developers.openai.com/api/docs/models) and the selected model's capabilities. Restart the dev processes after changing server settings. Never put secrets in a `VITE_*` variable or commit `.env`.
 
-Choose **AI (server)** after availability is detected. AI sends your prompt to OpenAI, may incur costs, and is not deterministic. The accepted design stays browser-local; the prompt and generated IR cross the provider boundary. No live provider generation was verified during implementation because no key/model was configured. Mock-provider tests and offline evaluations are verified separately.
+Choose **AI (server)** after availability is detected. AI sends your prompt to OpenAI, may incur costs, and is not deterministic. The accepted design stays browser-local; the prompt and generated IR cross the provider boundary. No live provider generation was verified during Phase 2 or Phase 3 implementation because no key/model was configured. Mock-provider tests and offline evaluations are verified separately.
 
 | Environment variable                                       | Default / constraint                                                            |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -62,7 +62,7 @@ npm run eval:offline
 npm audit
 ```
 
-`npm run format` formats files. Build output is in `dist/`; it is the **client only**. There is no production deployment workflow. Tests include server/provider mocks, client AI controls, canary-secret bundle isolation, eval math and all original Phase 1 tests. CI runs formatting, lint, typecheck, tests, offline eval and build; it never calls OpenAI. Workflow YAML was checked locally; remote CI execution has not been observed.
+`npm run format` formats files. Build output is in `dist/`; it is the **client only**. There is no production deployment workflow. Tests include structural editing/history/tree/drag events, server/provider mocks, client AI controls, canary-secret bundle isolation, eval math and all original test cases. CI runs formatting, lint, typecheck, tests, offline eval and build; it never calls OpenAI. Workflow YAML was checked locally; remote CI execution has not been observed.
 
 `npm run eval:live` is manual and billable, requires key/model, and writes ignored local results. See [eval documentation](docs/EVALS.md) for the 30-prompt corpus, metrics, synthetic offline results and honest limitations.
 
@@ -70,8 +70,24 @@ npm audit
 
 Five supported components: Stack, Text, Button, Input, Card. AI can compose only those components; unsupported requests must be approximated and invalid output rejected. No provider-side guarantee replaces Zod. Delimiters reduce prompt ambiguity but do not solve prompt injection; safety comes from validation and inert rendering/export templates.
 
-No progress SSE is implemented; the client waits for a complete validated result. No multiple providers, chat editing, new components, authentication, collaboration, billing, database, uploads, plugins, animations, undo/redo, tree editor, drag/reorder, multi-select or generated responsive variants. The studio shell adapts to small screens, without adding a design breakpoint model.
+No progress SSE is implemented; the client waits for a complete validated result. No multiple providers, chat editing, additional component types, authentication, collaboration, billing, database, uploads, plugins, animations, multi-select or generated responsive variants. The studio shell adapts to small screens, without adding a design breakpoint model.
 
 One unencrypted browser-local design; no backup, cross-tab coordination or import UI. Generation/reset replaces it. Cancellation is best-effort upstream and cannot refund tokens already consumed. In-memory rate limiting is dev-grade and resets on server restart. CSP, production security/accessibility audits, observability, performance budgets and deployment remain planned.
 
-See [architecture and threat model](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [Phase 2 verification](docs/PHASE2-VERIFICATION.md), and the historical [Phase 1 report](docs/VERIFICATION.md).
+## Interactive editing
+
+Switch the left panel from **Generate** to **Layers** to inspect the hierarchy. Tree and preview share one selection and inspector. Use Up/Down, Home/End to navigate visible rows; Right expands or selects the first child; Left collapses or selects the parent. Selecting an element in the preview reveals its ancestors in the tree. Disclosure state is local to the Layers panel and resets when switching panels.
+
+The inspector covers every existing prop: text/placeholder, colors, spacing, Text size/weight and Stack direction/alignment/justification. Configuration dropdowns apply immediately; text/numeric fields apply on Enter/blur. Invalid drafts remain inline without replacing the accepted design. Optional colors can be cleared. Accepted changes retain input focus.
+
+Use **New component type → Add component** for Stack, Card, Text, Button or Input. Addition selects the new node and places it inside the selected container, or appends to the selected leaf's parent. **Remove component** also removes descendants. The root cannot be removed or moved. **Move up/down** reorders siblings; **Parent container** reparents to a permitted container, appending the subtree. These controls are keyboard alternatives to dragging.
+
+Drag a Layers row to its **before / inside / after** targets. Targets stay in place and show allowed/blocked feedback. Only node IDs from an active drag in this tree are accepted; external text, HTML, files and JSON are not imported. Every move uses the same validation as the move controls; invalid nesting/cycles/depth/count violations are rejected. Touch-native dragging and cross-browser pointer behavior have not been audited; use the keyboard controls when needed.
+
+**Undo/Redo** covers property changes, insertion, subtree removal, reordering, reparenting, generated replacements and reset. Ctrl/Cmd+Z undoes; Ctrl/Cmd+Shift+Z and Ctrl+Y redo outside editable fields, where native text undo is left alone. Selection and rejected/no-op operations create no history. A new accepted edit clears redo. History is memory-only, with a shared maximum of 40 snapshots and 4 MiB of serialized UTF-8 snapshot data, dropping farthest states first. This bounds retained payload, not total JavaScript heap usage. Reload clears history and restores only the validated current design. Reset is undoable, so it is not secure erasure; export important work before replacing it.
+
+Accepted edits/undo/redo cancel pending AI generation. Late responses cannot overwrite the newer design even if the transport ignores abort. Cancellation cannot refund provider tokens already consumed.
+
+Phase 3's required audit found a Zod advisory. The project now uses patched Zod 4.6.7 and its native JSON Schema exporter; IR v1 limits and public diagnostic codes remain stable. No new editor dependency was added, and the obsolete converter was removed.
+
+See [Phase 3 verification](docs/PHASE3-VERIFICATION.md), [architecture and threat model](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [Phase 2 verification](docs/PHASE2-VERIFICATION.md), and the historical [Phase 1 report](docs/VERIFICATION.md).

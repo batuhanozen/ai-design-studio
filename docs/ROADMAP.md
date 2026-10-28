@@ -1,6 +1,6 @@
 # Roadmap
 
-The roadmap was written before application code, with every item marked **planned**. Phase 1 items below are now **implemented and verified** by the checks in VERIFICATION.md on 2026-10-21. Phase 2 implementation is verified with offline/mock checks; live model quality is not verified. Phases 3–4 remain **planned**.
+The roadmap was written before application code, with every item marked **planned**. Phase 1 items below are now **implemented and verified** by the checks in VERIFICATION.md on 2026-10-21. Phase 2 implementation is verified with offline/mock checks; live model quality is not verified. Phase 3 interactive editing is implemented with offline verification; Phase 4 remains **planned**.
 
 ## Phase 1 — Validated vertical slice
 
@@ -24,12 +24,17 @@ The roadmap was written before application code, with every item marked **planne
 - Exit: Offline vertical slice and safety checks pass. **Live quality exit remains open**: select an accessible model, run live eval, inspect failures and establish measured quality targets before declaring generation quality complete.
 - Non-goals: multiple providers, authentication, database, billing, deployment, production rate limiting, new components, chat editing, richer editing, production launch.
 
-## Phase 3 — Richer editing
+## Phase 3 — Interactive design workspace
 
-- **planned**: Additional allowlisted components with schema/renderer/exporter coverage.
-- **planned**: Tree panel, undo/redo, drag/reorder, responsive variants, migration tests.
-- Exit: all edit operations preserve valid IR; history and variant round trips pass tests.
-- Non-goals: collaboration, billing, plugin execution, production operations.
+- **implemented and verified**: Collapsible component tree, shared selection, parent/child navigation and tree keyboard controls.
+- **implemented and verified**: All existing properties/configurations, insertion/removal of the five supported types, sibling reordering and valid reparenting through pure schema-validated operations.
+- **implemented and verified**: Undo/redo for edits and design replacements, selection recovery, branch semantics, 40-entry / 4 MiB serialized shared history bounds and keyboard shortcuts.
+- **implemented and event-tested**: Native tree drag/drop, stationary before/inside/after targets, validation feedback, rejection of external payloads and keyboard move alternatives. A reliable native pointer-drop completion was not established by browser automation; cross-browser/touch verification remains open.
+- **implemented and verified offline**: Safe provider error classification, refusal/incomplete-response handling, workspace-revision cancellation and rejection of late AI results.
+- **implemented and verified**: Security-driven Zod 4.6.7 upgrade, native schema catalog export, unchanged IR v1 and preserved diagnostic codes. All previous test cases retained.
+- **planned beyond this requested workspace scope**: Additional component types and responsive variants with schema/migration/export coverage.
+- Exit: All accepted edit/history states remain valid and the complete verification suite passes. Live AI compatibility and browser/device/accessibility audits remain explicitly unverified.
+- Non-goals: authentication, collaboration, billing, database, additional providers, plugins, animations, generated breakpoints, production deployment or chat editing.
 
 ## Phase 4 — Production readiness
 
