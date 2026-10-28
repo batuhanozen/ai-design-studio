@@ -163,7 +163,13 @@ export function createAPI(
       });
       return json(
         result,
-        result.ok ? 200 : result.kind === "timeout" ? 504 : 502,
+        result.ok
+          ? 200
+          : result.kind === "timeout"
+            ? 504
+            : result.kind === "rate_limited"
+              ? 429
+              : 502,
       );
     } finally {
       busy = false;

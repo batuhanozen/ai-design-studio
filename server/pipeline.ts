@@ -5,7 +5,7 @@ import {
   formatErrors,
 } from "../src/ir/schema";
 import type { Limits } from "./config";
-import type { IRProvider, Usage } from "./provider";
+import { type IRProvider, type Usage, ProviderFailure } from "./provider";
 import { buildSystemPrompt, userMessage } from "./prompt";
 export type FailureKind =
   | "bad_request"
@@ -191,7 +191,13 @@ export async function runPipeline(
         "No valid design was produced.",
       ),
     );
-  } catch {
+  } catch (error) {
+    if (
+      !timedOut &&
+      !controller.signal.aborted &&
+      error instanceof ProviderFailure
+    )
+      return finish(failure(error.kind, error.code, error.message));
     return finish(
       failure(
         timedOut ? "timeout" : "provider_error",
