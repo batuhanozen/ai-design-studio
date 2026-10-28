@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { type Design } from "./ir/schema";
 import { findNode } from "./ir/edit";
 import { samples } from "./ir/samples";
 import { Preview } from "./components/Preview";
 import { Inspector } from "./components/Inspector";
+import { ComponentTree } from "./components/ComponentTree";
+import { StructureControls } from "./components/StructureControls";
+import { createEditor, editorReducer, type Command } from "./editor/history";
 import { GenerationForm } from "./components/GenerationForm";
 import { generateDesign } from "./services/generator";
 import { restoreDesign, saveDesign } from "./services/persistence";
@@ -20,26 +23,66 @@ function initialState() {
 }
 export default function App() {
   const [initial] = useState(initialState);
-  const [design, setDesign] = useState(initial.design);
+  const [editor, dispatch] = useReducer(
+    editorReducer,
+    initial.design,
+    createEditor,
+  );
+  const { design, selectedId } = editor.present;
+  const [panel, setPanel] = useState<"generate" | "layers">("generate");
   const [notice, setNotice] = useState(initial.notice);
-  const [selectedId, setSelectedId] = useState(initial.design.root.id);
+  function setSelectedId(id: string) {
+    dispatch({ type: "select", id });
+  }
+  function command(value: Command) {
+    dispatch({ type: "edit", command: value });
+  }
   const [prompt, setPrompt] = useState(
     "A minimal login form for a creative workspace",
   );
   const [tab, setTab] = useState<"preview" | "json" | "react">("preview");
   const [feedback, setFeedback] = useState("");
-  function commit(next: Design) {
-    setDesign(next);
-    try {
-      const error = saveDesign(window.localStorage, next);
-      if (error) setNotice(error);
-    } catch {
-      setNotice("Local storage is unavailable. Export your work to keep it.");
+  useEffect(() => {
+    if (editor.revision === 0) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const error = saveDesign(window.localStorage, design);
+        if (error) setNotice(error);
+      } catch {
+        setNotice("Local storage is unavailable. Export your work to keep it.");
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [design, editor.revision]);
+  useEffect(() => {
+    function shortcuts(event: KeyboardEvent) {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest("input,textarea,select,[contenteditable]")
+      )
+        return;
+      if (
+        event.isComposing ||
+        event.altKey ||
+        !(event.ctrlKey || event.metaKey)
+      )
+        return;
+      const key = event.key.toLowerCase();
+      if (key === "z" || (key === "y" && event.ctrlKey)) {
+        event.preventDefault();
+        dispatch({ type: key === "y" || event.shiftKey ? "redo" : "undo" });
+      }
     }
-  }
+    window.addEventListener("keydown", shortcuts);
+    return () => window.removeEventListener("keydown", shortcuts);
+  }, []);
   function replace(next: Design) {
-    commit(next);
-    setSelectedId(next.root.id);
+    dispatch({ type: "replace", candidate: next });
     setTab("preview");
   }
   const code = exportReact(design);
@@ -51,8 +94,26 @@ export default function App() {
           <span className="brand-sub">DESIGN STUDIO</span>
         </a>
         <span className="phase-badge">
-          <i /> LOCAL WORKSPACE · PHASE 02
+          <i /> LOCAL WORKSPACE · PHASE 03
         </span>
+        <div className="history-actions" aria-label="Design history">
+          <button
+            aria-label="Undo"
+            title="Undo (Ctrl/Cmd+Z outside text fields)"
+            disabled={editor.past.length === 0}
+            onClick={() => dispatch({ type: "undo" })}
+          >
+            ↶ Undo
+          </button>
+          <button
+            aria-label="Redo"
+            title="Redo (Ctrl/Cmd+Shift+Z)"
+            disabled={editor.future.length === 0}
+            onClick={() => dispatch({ type: "redo" })}
+          >
+            ↷ Redo
+          </button>
+        </div>
         <button className="quiet" onClick={() => replace(samples[0])}>
           Reset to sample
         </button>
@@ -68,55 +129,82 @@ export default function App() {
       </header>
       <main className="workspace">
         <aside className="prompt-panel">
-          <div className="section-label">YOUR STARTING POINT</div>
-          <h1>
-            Small prompt.
-            <br />
-            New possibilities.
-          </h1>
-          <p className="intro">
-            Turn a starting idea into a UI you can explore, edit, and make your
-            own.
-          </p>
-          <GenerationForm
-            prompt={prompt}
-            onPrompt={setPrompt}
-            onDesign={replace}
-          />
-          <div className="divider" />
-          <div className="section-label">A LITTLE INSPIRATION</div>
-          <div className="sample-list">
-            {samples.map((sample, index) => (
-              <button
-                key={sample.id}
-                onClick={() => {
-                  setPrompt(
+          <div className="sidebar-tabs" aria-label="Workspace panels">
+            <button
+              aria-pressed={panel === "generate"}
+              onClick={() => setPanel("generate")}
+            >
+              Generate
+            </button>
+            <button
+              aria-pressed={panel === "layers"}
+              onClick={() => setPanel("layers")}
+            >
+              Layers
+            </button>
+          </div>
+          <div hidden={panel !== "generate"}>
+            <div className="section-label">YOUR STARTING POINT</div>
+            <h1>
+              Small prompt.
+              <br />
+              New possibilities.
+            </h1>
+            <p className="intro">
+              Turn a starting idea into a UI you can explore, edit, and make
+              your own.
+            </p>
+            <GenerationForm
+              prompt={prompt}
+              onPrompt={setPrompt}
+              onDesign={replace}
+              revision={editor.revision}
+            />
+            <div className="divider" />
+            <div className="section-label">A LITTLE INSPIRATION</div>
+            <div className="sample-list">
+              {samples.map((sample, index) => (
+                <button
+                  key={sample.id}
+                  onClick={() => {
+                    setPrompt(
+                      [
+                        "A minimal login form",
+                        "A simple pricing card",
+                        "A dashboard header",
+                        "A contact form",
+                      ][index],
+                    );
+                    replace(
+                      generateDesign(
+                        ["login", "pricing", "dashboard", "contact"][index],
+                      ),
+                    );
+                  }}
+                >
+                  <span>{["↳", "◫", "▤", "✉"][index]}</span>
+                  {
                     [
-                      "A minimal login form",
-                      "A simple pricing card",
-                      "A dashboard header",
-                      "A contact form",
-                    ][index],
-                  );
-                  replace(
-                    generateDesign(
-                      ["login", "pricing", "dashboard", "contact"][index],
-                    ),
-                  );
-                }}
-              >
-                <span>{["↳", "◫", "▤", "✉"][index]}</span>
-                {
-                  [
-                    "Login form",
-                    "Pricing card",
-                    "Dashboard header",
-                    "Contact form",
-                  ][index]
-                }
-                <span>↗</span>
-              </button>
-            ))}
+                      "Login form",
+                      "Pricing card",
+                      "Dashboard header",
+                      "Contact form",
+                    ][index]
+                  }
+                  <span>↗</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div hidden={panel !== "layers"}>
+            {panel === "layers" && (
+              <ComponentTree
+                design={design}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onCommand={command}
+              />
+            )}
           </div>
           <div className="local-note">
             <span className="local-dot" />
@@ -145,6 +233,17 @@ export default function App() {
               <i /> Validated IR <span>v1.0.0</span>
             </span>
           </div>
+          {editor.error && (
+            <div role="alert" className="notice editor-error">
+              {editor.error}
+              <button
+                aria-label="Dismiss editing error"
+                onClick={() => dispatch({ type: "clear-error" })}
+              >
+                ×
+              </button>
+            </div>
+          )}
           {notice && (
             <div className="notice" role="status">
               {notice}
@@ -228,7 +327,14 @@ export default function App() {
           <Inspector
             design={design}
             node={findNode(design.root, selectedId)}
-            onCommit={commit}
+            revision={editor.revision}
+            onEdit={(id, patch) => command({ kind: "props", id, patch })}
+          />
+          <StructureControls
+            design={design}
+            selectedId={selectedId}
+            onCommand={command}
+            onSelect={setSelectedId}
           />
           <div className="inspector-bottom">
             <span className="section-label">BUILT TO BE YOURS</span>

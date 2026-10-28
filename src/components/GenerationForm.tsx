@@ -6,10 +6,12 @@ export function GenerationForm({
   prompt,
   onPrompt,
   onDesign,
+  revision = 0,
 }: {
   prompt: string;
   onPrompt: (prompt: string) => void;
   onDesign: (design: Design) => void;
+  revision?: number;
 }) {
   const [enabled, setEnabled] = useState(false);
   const [capabilityMessage, setCapabilityMessage] = useState(
@@ -23,6 +25,7 @@ export function GenerationForm({
     const controller = new AbortController();
     getCapabilities(controller.signal)
       .then((value) => {
+        if (controller.signal.aborted) return;
         setEnabled(value);
         setCapabilityMessage(
           value
@@ -41,6 +44,9 @@ export function GenerationForm({
       active.current?.abort();
     };
   }, []);
+  useEffect(() => {
+    active.current?.abort("workspace_changed");
+  }, [revision]);
   async function generate() {
     setError("");
     if (mode === "samples") {
@@ -55,7 +61,11 @@ export function GenerationForm({
       if (!controller.signal.aborted && active.current === controller)
         onDesign(design);
     } catch (caught) {
-      if (!controller.signal.aborted)
+      if (controller.signal.reason === "workspace_changed")
+        setError(
+          "Generation cancelled because the design changed. Your edits were kept.",
+        );
+      else if (!controller.signal.aborted)
         setError(
           caught instanceof AIError
             ? `${caught.kind}: ${caught.message}`
@@ -102,6 +112,7 @@ export function GenerationForm({
       </fieldset>
       <p className="capability-note">{capabilityMessage}</p>
       <form
+        aria-busy={loading}
         onSubmit={(event) => {
           event.preventDefault();
           if (!loading) void generate();
@@ -131,6 +142,12 @@ export function GenerationForm({
           </button>
         )}
       </form>
+      {loading && (
+        <p className="generation-progress" role="status">
+          Generating a validated design… Editing or undoing cancels this
+          request.
+        </p>
+      )}
       <p className="generator-note">
         <span>◈</span>
         {mode === "samples"

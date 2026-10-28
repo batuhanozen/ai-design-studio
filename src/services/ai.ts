@@ -44,7 +44,7 @@ export async function getCapabilities(signal: AbortSignal): Promise<boolean> {
     .strict()
     .parse(await response.json()).aiEnabled;
 }
-export async function requestDesign(
+async function fetchDesign(
   prompt: string,
   signal: AbortSignal,
 ): Promise<Design> {
@@ -84,4 +84,25 @@ export async function requestDesign(
   const valid = validateDesign(envelope.data.design);
   if (!valid.ok) throw new AIError("invalid_output", valid.errors);
   return valid.design;
+}
+
+// Abort settles the caller even if a transport ignores its signal; late results are discarded.
+export function requestDesign(
+  prompt: string,
+  signal: AbortSignal,
+): Promise<Design> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener("abort", abort);
+      reject(new DOMException("Generation aborted.", "AbortError"));
+    };
+    if (signal.aborted) {
+      abort();
+      return;
+    }
+    signal.addEventListener("abort", abort, { once: true });
+    fetchDesign(prompt, signal)
+      .then(resolve, reject)
+      .finally(() => signal.removeEventListener("abort", abort));
+  });
 }
