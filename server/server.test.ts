@@ -1,7 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
 import { readConfig } from "./config";
 import { createAPI, type LogMetadata } from "./api";
 import { runPipeline, parseOutput } from "./pipeline";
@@ -302,9 +301,7 @@ describe("schema-derived prompting and configuration", () => {
   it("derives the complete catalog from the authoritative schema and includes validated examples", () => {
     const prompt = buildSystemPrompt();
     expect(prompt).toContain(
-      JSON.stringify(
-        zodToJsonSchema(designSchema, { name: "Design", $refStrategy: "root" }),
-      ),
+      JSON.stringify(z.toJSONSchema(designSchema, { target: "draft-7" })),
     );
     for (const sample of samples.slice(0, 3))
       expect(prompt).toContain(JSON.stringify(sample));

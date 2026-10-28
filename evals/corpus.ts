@@ -6,7 +6,7 @@ const evalCaseSchema = z
     prompt: z.string().min(1).max(4000),
     expect: z
       .object({
-        minTypes: z.record(
+        minTypes: z.partialRecord(
           z.enum(["Stack", "Card", "Text", "Button", "Input"]),
           z.number().int().min(1).max(200),
         ),

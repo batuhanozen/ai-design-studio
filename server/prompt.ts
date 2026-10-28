@@ -1,5 +1,4 @@
-import type { z } from "zod";
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import {
   designSchema,
   MAX_DEPTH,
@@ -8,10 +7,7 @@ import {
 } from "../src/ir/schema";
 import { samples } from "../src/ir/samples";
 export function buildSystemPrompt(schema: z.ZodType = designSchema): string {
-  const catalog = zodToJsonSchema(schema, {
-    name: "Design",
-    $refStrategy: "root",
-  });
+  const catalog = z.toJSONSchema(schema, { target: "draft-7" });
   return [
     "Return exactly one IR JSON object, never React, HTML, JavaScript, CSS, prose, or fences. Text contents are plain text, never executable markup.",
     "Use only component types and properties from the following schema-derived catalog. All objects reject unknown keys. Produce unique stable node IDs. Only containers have children.",

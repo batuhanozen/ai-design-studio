@@ -129,15 +129,15 @@ export type ValidationError = { path: string; code: string; message: string };
 export type ValidationResult =
   | { ok: true; design: Design }
   | { ok: false; errors: ValidationError[] };
-function pathString(parts: (string | number)[]): string {
+function pathString(parts: PropertyKey[]): string {
   return (
     parts.reduce<string>(
       (path, part) =>
         typeof part === "number"
           ? `${path}[${part}]`
           : path
-            ? `${path}.${part}`
-            : part,
+            ? `${path}.${String(part)}`
+            : String(part),
       "",
     ) || "$"
   );
@@ -208,7 +208,15 @@ export function validateDesign(candidate: unknown): ValidationResult {
         : [
             {
               path: pathString(issue.path),
-              code: issue.code,
+              // Keep the public v1 diagnostic codes stable across the Zod upgrade.
+              code:
+                issue.code === "invalid_value"
+                  ? issue.path[issue.path.length - 1] === "schemaVersion"
+                    ? "invalid_literal"
+                    : "invalid_enum_value"
+                  : issue.code === "invalid_union" && "discriminator" in issue
+                    ? "invalid_union_discriminator"
+                    : issue.code,
               message: issue.message,
             },
           ],
