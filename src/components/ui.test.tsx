@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type DesignNode, validateDesign } from "../ir/schema";
 import { samples } from "../ir/samples";
@@ -71,7 +71,7 @@ describe("editor flow", () => {
     const restored = JSON.parse(localStorage.getItem(STORAGE_KEY)!);
     expect(validateDesign(restored).ok).toBe(true);
     expect(restored.root.children[1].props.color).toBe("ink");
-    await user.click(screen.getByRole("button", { name: "{ } JSON" }));
+    await user.click(screen.getByRole("button", { name: "JSON" }));
     expect(screen.getByLabelText("Design JSON").textContent).toContain(
       "My workspace",
     );
@@ -128,5 +128,108 @@ describe("editor flow", () => {
     expect(create).toHaveBeenCalledOnce();
     expect(click).toHaveBeenCalledOnce();
     click.mockRestore();
+  });
+});
+describe("usability and accessibility polish", () => {
+  function stubViewport(narrow: boolean) {
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", {
+      value: scrollIntoView,
+      configurable: true,
+    });
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn((query: string) => ({
+        matches: narrow && query.includes("max-width: 560px"),
+        media: query,
+      })),
+    );
+    return scrollIntoView;
+  }
+  it("exposes the current canvas view, labelled landmarks and exactly one page heading", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(
+      screen
+        .getByRole("button", { name: "Preview" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    await user.click(screen.getByRole("button", { name: "JSON" }));
+    expect(
+      screen.getByRole("button", { name: "JSON" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("button", { name: "Preview" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+    expect(
+      screen.getByRole("complementary", { name: "Inspector" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("complementary", { name: "Generate and layers" }),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Layers" }));
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(document.body.textContent).not.toMatch(/phase\s*0?3/i);
+  });
+  it("makes the scrollable code block keyboard focusable", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /Export component/ }));
+    expect(screen.getByLabelText("React component").tabIndex).toBe(0);
+  });
+  it("clears the copy/download message when another file is shown", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    await user.click(screen.getByRole("button", { name: "JSON" }));
+    await user.click(screen.getByRole("button", { name: "Copy" }));
+    expect(screen.getByRole("status").textContent).toContain("Copied");
+    await user.click(screen.getByRole("button", { name: "React" }));
+    expect(screen.getByRole("status").textContent).toBe("");
+  });
+  it("brings results into view on narrow screens and announces the update", async () => {
+    const scrollIntoView = stubViewport(true);
+    const user = userEvent.setup();
+    const view = render(<App />);
+    await user.click(screen.getByRole("button", { name: /Pricing card/ }));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(
+      view.container.querySelector("[aria-live=polite]")!.textContent,
+    ).toBe(`Design updated: ${samples[1].name}.`);
+    await user.click(screen.getByRole("button", { name: /Export component/ }));
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
+  });
+  it("does not scroll on wide screens, where the canvas is already visible", async () => {
+    const scrollIntoView = stubViewport(false);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: /Pricing card/ }));
+    await user.click(screen.getByRole("button", { name: /Export component/ }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+  it("gives empty buttons and inputs an accessible name and labels optional fields", async () => {
+    const empty = updateNodeProps(samples[0], "login-email", {
+      placeholder: "",
+    });
+    if (!empty.ok) throw new Error("Fixture failed");
+    const emptyButton = updateNodeProps(empty.design, "login-submit", {
+      text: "",
+    });
+    if (!emptyButton.ok) throw new Error("Fixture failed");
+    render(<RenderNode node={emptyButton.design.root} />);
+    expect(screen.getByRole("textbox", { name: "Text input" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Button" })).toBeTruthy();
+    cleanup();
+    render(<App />);
+    expect(
+      screen
+        .getByRole("textbox", { name: "color" })
+        .getAttribute("placeholder"),
+    ).toBe("none (optional)");
   });
 });

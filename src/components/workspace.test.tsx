@@ -26,6 +26,13 @@ function current() {
   expect(validateDesign(design).ok).toBe(true);
   return design;
 }
+async function dropZone(container: HTMLElement, key: string) {
+  return waitFor(() => {
+    const zone = container.querySelector(`[data-drop="${key}"]`);
+    expect(zone).not.toBeNull();
+    return zone!;
+  });
+}
 async function layers(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Layers" }));
   return screen.getByRole("tree", { name: "Component tree" });
@@ -215,9 +222,7 @@ describe("interactive workspace", () => {
       .getByRole("treeitem", { name: "Text dash-title" })
       .querySelector(".tree-row")!;
     fireEvent.dragStart(source, { dataTransfer: transfer });
-    const before = view.container.querySelector(
-      '[data-drop="dash-label:before"]',
-    )!;
+    const before = await dropZone(view.container, "dash-label:before");
     fireEvent.dragOver(before, { dataTransfer: transfer });
     expect(before.className).toContain("drop-valid");
     fireEvent.drop(before, { dataTransfer: transfer });
@@ -230,9 +235,7 @@ describe("interactive workspace", () => {
         .querySelector(".tree-row")!,
       { dataTransfer: transfer },
     );
-    const invalid = view.container.querySelector(
-      '[data-drop="dash-new:inside"]',
-    )!;
+    const invalid = await dropZone(view.container, "dash-new:inside");
     fireEvent.dragOver(invalid, { dataTransfer: transfer });
     expect(invalid.className).toContain("drop-invalid");
     fireEvent.drop(invalid, { dataTransfer: transfer });
@@ -244,6 +247,73 @@ describe("interactive workspace", () => {
     );
     expect(transfer.getData).not.toHaveBeenCalled();
     expect(view.container.querySelector("script")).toBeNull();
+  });
+  it("defers drag state until dragstart has returned, because Chromium cancels a drag whose DOM changes synchronously", async () => {
+    const user = userEvent.setup();
+    const view = mount(2);
+    const tree = await layers(user);
+    const transfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const row = within(tree)
+      .getByRole("treeitem", { name: "Text dash-title" })
+      .querySelector(".tree-row")!;
+    fireEvent.dragStart(row, { dataTransfer: transfer });
+    // Nothing may change in the DOM inside the dragstart task itself.
+    expect(view.container.querySelector(".tree-dropzones")).toBeNull();
+    expect(view.container.querySelector(".is-sorting")).toBeNull();
+    expect(transfer.setData).toHaveBeenCalledWith(
+      "application/x-forma-node",
+      "dash-title",
+    );
+    await dropZone(view.container, "dash-label:before");
+    expect(view.container.querySelector(".is-sorting")).not.toBeNull();
+    fireEvent.dragEnd(row);
+    await waitFor(() =>
+      expect(view.container.querySelector(".tree-dropzones")).toBeNull(),
+    );
+    expect(screen.getByRole("status").textContent).toBe("Nothing was moved.");
+  });
+  it("does not start a drag state when the drag ends before the deferred update runs", async () => {
+    const user = userEvent.setup();
+    const view = mount(2);
+    const tree = await layers(user);
+    const transfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
+    const row = within(tree)
+      .getByRole("treeitem", { name: "Text dash-title" })
+      .querySelector(".tree-row")!;
+    fireEvent.dragStart(row, { dataTransfer: transfer });
+    fireEvent.dragEnd(row);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(view.container.querySelector(".tree-dropzones")).toBeNull();
+    expect(view.container.querySelector(".is-sorting")).toBeNull();
+  });
+  it("never moves a node when it is released outside a before/inside/after target", async () => {
+    const user = userEvent.setup();
+    const view = mount(2);
+    const tree = await layers(user);
+    const transfer = {
+      setData: vi.fn(),
+      getData: vi.fn(),
+      effectAllowed: "",
+      dropEffect: "",
+    };
+    const row = within(tree)
+      .getByRole("treeitem", { name: "Text dash-title" })
+      .querySelector(".tree-row")!;
+    const before = JSON.stringify(current());
+    fireEvent.dragStart(row, { dataTransfer: transfer });
+    await dropZone(view.container, "dash-label:before");
+    // A row label sits outside every drop strip; the event bubbles to the tree.
+    const label = within(tree)
+      .getByRole("treeitem", { name: "Text dash-label" })
+      .querySelector(".tree-label")!;
+    fireEvent.dragOver(label, { dataTransfer: transfer });
+    expect(transfer.dropEffect).toBe("none");
+    fireEvent.drop(label, { dataTransfer: transfer });
+    expect(JSON.stringify(current())).toBe(before);
+    expect(screen.getByRole("status").textContent).toContain(
+      "Choose a component from this tree",
+    );
+    expect(view.container.querySelector(".tree-dropzones")).toBeNull();
   });
   it("accepts AI-produced IR into editing/history and cancels generation when the workspace changes", async () => {
     let resolve: ((value: Response) => void) | undefined;

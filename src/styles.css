@@ -67,19 +67,19 @@ button:hover {
   font-size: 32px;
 }
 .brand-sub {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.9px;
   font-weight: 500;
-  color: #8a909c;
+  color: #5a6578;
   border-left: 1px solid #e0e2e8;
   margin-left: 9px;
   padding-left: 18px;
 }
 .phase-badge {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.3px;
   margin-left: auto;
-  color: #697586;
+  color: #5a6578;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -96,7 +96,7 @@ button:hover {
 .quiet {
   border: 0;
   background: transparent;
-  color: #6c7481;
+  color: #5a6578;
   font-size: 12px;
   margin-left: 16px;
 }
@@ -125,12 +125,12 @@ button:hover {
   flex-direction: column;
 }
 .section-label {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   font-weight: 600;
-  color: #9298a4;
+  color: #5a6578;
 }
-.prompt-panel h1 {
+.prompt-heading {
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 400;
   font-size: 31px;
@@ -141,7 +141,7 @@ button:hover {
 .intro {
   font-size: 12px;
   line-height: 1.8;
-  color: #7d8490;
+  color: #5a6578;
   margin: 0 0 28px;
 }
 .prompt-label {
@@ -175,9 +175,9 @@ textarea {
   font-size: 12px;
 }
 .generator-note {
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.8;
-  color: #9096a2;
+  color: #5a6578;
   padding-left: 20px;
   position: relative;
   margin-top: 13px;
@@ -185,7 +185,7 @@ textarea {
 .generator-note > span {
   position: absolute;
   left: 0;
-  color: #8f80cf;
+  color: #5a4db3;
 }
 .divider {
   height: 1px;
@@ -210,18 +210,18 @@ textarea {
   color: #667080;
 }
 .sample-list button span:first-child {
-  color: #8b82b6;
+  color: #5a4db3;
   font-size: 15px;
 }
 .sample-list button span:last-child {
   margin-left: auto;
-  color: #a4aab5;
+  color: #5a6578;
 }
 .local-note {
   padding-top: 50px;
   margin-top: auto;
-  font-size: 10px;
-  color: #8b929e;
+  font-size: 11px;
+  color: #5a6578;
 }
 .local-note .local-dot {
   margin-right: 6px;
@@ -230,9 +230,9 @@ textarea {
 }
 .local-note small {
   display: block;
-  font-size: 9px;
+  font-size: 11px;
   margin: 7px 0 0 12px;
-  color: #a6acb6;
+  color: #5a6578;
 }
 .canvas-panel {
   display: flex;
@@ -257,7 +257,7 @@ textarea {
 .tabs button {
   font-size: 11px;
   background: transparent;
-  color: #8e95a1;
+  color: #5a6578;
   border: 0;
   padding: 9px 11px;
   border-radius: 6px;
@@ -269,16 +269,16 @@ textarea {
   border: 1px solid #e7e7ef;
 }
 .validated {
-  font-size: 9px;
+  font-size: 11px;
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #7a8492;
+  color: #5a6578;
   white-space: nowrap;
 }
 .validated span {
   margin-left: 7px;
-  color: #a0a8b4;
+  color: #5a6578;
 }
 .canvas-content {
   flex: 1;
@@ -292,13 +292,13 @@ textarea {
   margin: 0 auto 14px;
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  color: #7a8493;
+  font-size: 11px;
+  color: #5a6578;
 }
 .artboard-label span:last-child {
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1px;
-  color: #a1a7b2;
+  color: #5a6578;
 }
 .artboard {
   max-width: 450px;
@@ -332,7 +332,7 @@ textarea {
   top: 0;
   left: 0;
   padding: 4px;
-  font-size: 10px;
+  font-size: 11px;
 }
 .preview-node:has(> input),
 .preview-node:has(> button:not(.select-node)) {
@@ -341,8 +341,8 @@ textarea {
 }
 .canvas-hint {
   text-align: center;
-  color: #a2a8b3;
-  font-size: 10px;
+  color: #5a6578;
+  font-size: 11px;
   margin: 30px 0;
 }
 .canvas-footer {
@@ -351,8 +351,8 @@ textarea {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  font-size: 9px;
-  color: #929ba8;
+  font-size: 11px;
+  color: #5a6578;
   border-top: 1px solid #e4e8ef;
   background: #fbfcfd;
 }
@@ -375,7 +375,7 @@ textarea {
 }
 .inspector-heading span {
   font-size: 15px;
-  color: #a3a9b2;
+  color: #5a6578;
 }
 .selected-type {
   font-size: 14px;
@@ -385,8 +385,8 @@ textarea {
   justify-content: space-between;
 }
 .selected-type span {
-  font-size: 8px;
-  color: #9186b8;
+  font-size: 11px;
+  color: #5a4db3;
   background: #f2eefc;
   padding: 5px 6px;
   border-radius: 4px;
@@ -394,8 +394,8 @@ textarea {
 }
 .node-id {
   font-family: monospace;
-  font-size: 10px;
-  color: #a0a7b2;
+  font-size: 11px;
+  color: #5a6578;
   margin: 7px 0 30px;
 }
 .field {
@@ -403,8 +403,8 @@ textarea {
   display: block;
 }
 .field > span {
-  font-size: 10px;
-  color: #7e8794;
+  font-size: 11px;
+  color: #5a6578;
   display: block;
   margin-bottom: 7px;
   text-transform: capitalize;
@@ -421,14 +421,14 @@ textarea {
 .field small {
   display: block;
   color: #b04458;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
   margin-top: 7px;
   overflow-wrap: anywhere;
 }
 .inspector-help {
-  font-size: 10px;
-  color: #9aa1ad;
+  font-size: 11px;
+  color: #5a6578;
   line-height: 1.8;
   margin-top: 22px;
 }
@@ -439,15 +439,15 @@ textarea {
 .inspector-bottom p {
   font-size: 11px;
   line-height: 1.9;
-  color: #939aa6;
+  color: #5a6578;
 }
 .inspector-bottom button {
   border: 1px solid #e3e6ec;
   border-radius: 6px;
   background: white;
   padding: 10px;
-  font-size: 10px;
-  color: #6d7786;
+  font-size: 11px;
+  color: #5a6578;
   width: 100%;
   text-align: left;
 }
@@ -489,7 +489,7 @@ textarea {
   border-radius: 5px;
   background: #fafbfc;
   padding: 6px 10px;
-  color: #677184;
+  color: #5a6578;
 }
 .code-panel pre {
   padding: 18px;
@@ -524,7 +524,7 @@ textarea {
     display: none;
   }
   .phase-badge {
-    font-size: 8px;
+    font-size: 11px;
   }
   .inspector-panel {
     padding-right: 16px;
@@ -571,7 +571,7 @@ textarea {
   .prompt-panel {
     padding: 24px;
   }
-  .prompt-panel h1 br {
+  .prompt-heading br {
     display: none;
   }
   .sample-list {
@@ -588,14 +588,14 @@ textarea {
     font-size: 22px;
   }
   .dark-button {
-    font-size: 10px;
+    font-size: 11px;
     padding: 10px;
   }
   .quiet {
-    font-size: 10px;
+    font-size: 11px;
   }
   .canvas-footer {
-    font-size: 8px;
+    font-size: 11px;
   }
   .topbar {
     height: 70px;
@@ -615,8 +615,8 @@ textarea {
   font-size: 11px;
 }
 .generation-mode legend {
-  font-size: 10px;
-  color: #697586;
+  font-size: 11px;
+  color: #5a6578;
   padding: 0 4px;
 }
 .generation-mode label {
@@ -631,9 +631,9 @@ textarea {
   color: #a1a7b2;
 }
 .capability-note {
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.6;
-  color: #808996;
+  color: #5a6578;
   margin: 6px 0 20px;
 }
 .cancel-generation {
@@ -643,7 +643,7 @@ textarea {
   border: 1px solid #dfe3eb;
   border-radius: 7px;
   margin-top: 8px;
-  color: #697586;
+  color: #5a6578;
   font-size: 11px;
 }
 .generation-error {
@@ -672,7 +672,7 @@ textarea {
   border: 0;
   background: transparent;
   padding: 8px 12px;
-  color: #858d9c;
+  color: #5a6578;
   font-size: 12px;
   border-radius: 6px;
 }
@@ -715,8 +715,8 @@ textarea {
 }
 .tree-heading span,
 .tree-help {
-  font-size: 10px;
-  color: #8c94a3;
+  font-size: 11px;
+  color: #5a6578;
 }
 .tree-help {
   line-height: 1.7;
@@ -759,24 +759,24 @@ textarea {
   background: transparent;
   border: 0;
   padding: 2px;
-  color: #8d83ae;
+  color: #5a4db3;
   width: 14px;
   flex-shrink: 0;
 }
 .tree-leaf {
   width: 14px;
   text-align: center;
-  color: #afb5c0;
+  color: #5a6578;
   flex-shrink: 0;
 }
 .tree-type {
-  font-size: 10px;
+  font-size: 11px;
   color: #6b5b9b;
   flex-shrink: 0;
 }
 .tree-label {
-  font-size: 10px;
-  color: #8b93a2;
+  font-size: 11px;
+  color: #5a6578;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -789,19 +789,19 @@ textarea {
   left: 18px;
   right: 0;
   margin: 0;
-  height: 18px;
+  height: 20px;
   z-index: 2;
   background: #fff;
 }
 .tree-dropzones span {
-  font-size: 8px;
-  padding: 2px;
-  line-height: 10px;
+  font-size: 10px;
+  padding: 3px 2px;
+  line-height: 12px;
   border: 1px dashed #d7dce6;
   flex: 1;
   text-align: center;
   border-radius: 4px;
-  color: #939ba9;
+  color: #5a6578;
 }
 .tree-dropzones .drop-valid {
   background: #e0f4e9;
@@ -825,7 +825,7 @@ textarea {
 }
 .structure-actions button {
   flex: 1;
-  font-size: 10px;
+  font-size: 11px;
   padding: 7px 3px;
 }
 .field select {
@@ -909,7 +909,7 @@ textarea {
     max-width: 460px;
   }
   .history-actions button {
-    font-size: 10px;
+    font-size: 11px;
     padding: 8px;
   }
   .topbar {
@@ -994,4 +994,24 @@ textarea {
 .is-sorting .tree-row {
   align-items: flex-start;
   padding-top: 2px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.code-panel pre:focus-visible {
+  outline: 3px solid #9b8cf0;
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
 }

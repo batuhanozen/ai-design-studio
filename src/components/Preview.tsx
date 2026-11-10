@@ -17,14 +17,20 @@ const registry = {
     <p style={style}>{node.type === "Text" ? node.props.text : ""}</p>
   ),
   Button: ({ node, style }: EntryProps) => (
-    <button type="button" style={style}>
+    <button
+      type="button"
+      style={style}
+      aria-label={
+        node.type === "Button" && node.props.text === "" ? "Button" : undefined
+      }
+    >
       {node.type === "Button" ? node.props.text : ""}
     </button>
   ),
   Input: ({ node, style }: EntryProps) => (
     <input
       aria-label={
-        node.type === "Input" ? node.props.placeholder : "Preview input"
+        (node.type === "Input" ? node.props.placeholder : "") || "Text input"
       }
       placeholder={node.type === "Input" ? node.props.placeholder : ""}
       style={style}

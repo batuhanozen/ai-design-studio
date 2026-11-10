@@ -1,4 +1,10 @@
-import { useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+} from "react";
 import type { Design, DesignNode } from "../ir/schema";
 import { findNode } from "../ir/edit";
 import { locateNode, moveNode } from "../ir/structure";
@@ -21,6 +27,18 @@ export function ComponentTree({
   );
   const [message, setMessage] = useState("");
   const refs = useRef(new Map<string, HTMLLIElement>());
+  const dragTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (dragTimer.current !== null) window.clearTimeout(dragTimer.current);
+    },
+    [],
+  );
+  function cancelPendingDrag() {
+    if (dragTimer.current === null) return;
+    window.clearTimeout(dragTimer.current);
+    dragTimer.current = null;
+  }
   const expanded = (node: DesignNode) =>
     !collapsed.has(node.id) ||
     (node.id !== selectedId && Boolean(findNode(node, selectedId)));
@@ -184,17 +202,31 @@ export function ComponentTree({
               event.preventDefault();
               return;
             }
-            onSelect(node.id);
-            setDrag(node.id);
-            setMessage(
-              "Drop before, inside, or after a row. Move controls offer a keyboard alternative.",
-            );
             event.dataTransfer.effectAllowed = "move";
             event.dataTransfer.setData("application/x-forma-node", node.id);
+            // Chromium cancels a native drag when the DOM changes synchronously
+            // inside dragstart. Update React state on the next task instead,
+            // after the browser has captured the drag.
+            cancelPendingDrag();
+            dragTimer.current = window.setTimeout(() => {
+              dragTimer.current = null;
+              onSelect(node.id);
+              setDrag(node.id);
+              setMessage(
+                "Drop before, inside, or after a row. Move controls offer a keyboard alternative.",
+              );
+            }, 0);
           }}
           onDragEnd={() => {
+            cancelPendingDrag();
             setDrag(null);
             setHover(null);
+            // A drop replaces this message; if it is still the drag hint, the drag was cancelled.
+            setMessage((current) =>
+              current.startsWith("Drop before")
+                ? "Nothing was moved."
+                : current,
+            );
           }}
         >
           {container ? (
@@ -266,10 +298,20 @@ export function ComponentTree({
         aria-label="Component tree"
         aria-describedby="tree-help"
         onDragOver={(event) => {
-          event.preventDefault();
-          if (!drag) event.dataTransfer.dropEffect = "none";
+          // Only the before/inside/after targets accept a drop. Not cancelling
+          // dragover here keeps every other area (row labels, gaps, empty
+          // space) from silently moving a node to the root.
+          event.dataTransfer.dropEffect = "none";
         }}
-        onDrop={(event) => drop(event, design.root.id, "inside")}
+        onDrop={(event) => {
+          event.preventDefault();
+          // External text/HTML/JSON payloads are never read or parsed.
+          setDrag(null);
+          setHover(null);
+          setMessage(
+            "Choose a component from this tree and a valid destination. The root cannot be reordered.",
+          );
+        }}
       >
         {row(design.root)}
       </ul>

@@ -11,11 +11,13 @@ function Field({
   name,
   value,
   revision,
+  placeholder,
   onApply,
 }: {
   name: string;
   value: string | number;
   revision: number;
+  placeholder?: string;
   onApply: (value: string) => string;
 }) {
   const source = JSON.stringify([value, revision]);
@@ -51,6 +53,7 @@ function Field({
         <input
           aria-label={name}
           value={current.draft}
+          placeholder={placeholder}
           onChange={(event) =>
             setEditing({ ...current, draft: event.target.value, error: "" })
           }
@@ -67,6 +70,9 @@ function Field({
     </label>
   );
 }
+const isOptional = (type: DesignNode["type"], name: string) =>
+  (type === "Stack" && name === "background") ||
+  (type === "Card" && name === "color");
 export function Inspector({
   design,
   node,
@@ -100,10 +106,11 @@ export function Inspector({
           name={name}
           value={value ?? ""}
           revision={revision}
+          placeholder={
+            isOptional(node.type, name) ? "none (optional)" : undefined
+          }
           onApply={(draft) => {
-            const optional =
-              (node.type === "Stack" && name === "background") ||
-              (node.type === "Card" && name === "color");
+            const optional = isOptional(node.type, name);
             const parsed =
               optional && draft === ""
                 ? undefined

@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { type Design } from "./ir/schema";
 import { findNode } from "./ir/edit";
 import { samples } from "./ir/samples";
@@ -42,6 +42,25 @@ export default function App() {
   );
   const [tab, setTab] = useState<"preview" | "json" | "react">("preview");
   const [feedback, setFeedback] = useState("");
+  const [announcement, setAnnouncement] = useState("");
+  const canvasRef = useRef<HTMLElement>(null);
+  function changeTab(next: "preview" | "json" | "react") {
+    setTab(next);
+    // The copy/download message belongs to the previous file; do not carry it over.
+    setFeedback("");
+  }
+  // On phones the canvas is stacked below the prompt panel, so results of
+  // "Generate" or "Export" would otherwise appear off-screen without feedback.
+  function revealCanvas() {
+    if (!window.matchMedia?.("(max-width: 560px)").matches) return;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    canvasRef.current?.scrollIntoView?.({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
+  }
   useEffect(() => {
     if (editor.revision === 0) return;
     let cancelled = false;
@@ -83,18 +102,27 @@ export default function App() {
   }, []);
   function replace(next: Design) {
     dispatch({ type: "replace", candidate: next });
-    setTab("preview");
+    changeTab("preview");
+    setAnnouncement(`Design updated: ${next.name}.`);
+    revealCanvas();
   }
   const code = exportReact(design);
   return (
     <div className="app-shell">
       <header className="topbar">
+        <h1 className="sr-only">Forma design studio</h1>
+        <p className="sr-only" aria-live="polite">
+          {announcement}
+        </p>
         <a className="brand" href="#">
-          <span className="brand-mark">f</span>forma
+          <span className="brand-mark" aria-hidden="true">
+            f
+          </span>
+          forma
           <span className="brand-sub">DESIGN STUDIO</span>
         </a>
         <span className="phase-badge">
-          <i /> LOCAL WORKSPACE · PHASE 03
+          <i /> LOCAL WORKSPACE
         </span>
         <div className="history-actions" aria-label="Design history">
           <button
@@ -120,16 +148,20 @@ export default function App() {
         <button
           className="dark-button"
           onClick={() => {
-            setTab("react");
-            setFeedback("");
+            changeTab("react");
+            revealCanvas();
           }}
         >
-          Export component <span>↗</span>
+          Export component <span aria-hidden="true">↗</span>
         </button>
       </header>
       <main className="workspace">
-        <aside className="prompt-panel">
-          <div className="sidebar-tabs" aria-label="Workspace panels">
+        <aside className="prompt-panel" aria-label="Generate and layers">
+          <div
+            className="sidebar-tabs"
+            role="group"
+            aria-label="Workspace panels"
+          >
             <button
               aria-pressed={panel === "generate"}
               onClick={() => setPanel("generate")}
@@ -145,11 +177,10 @@ export default function App() {
           </div>
           <div hidden={panel !== "generate"}>
             <div className="section-label">YOUR STARTING POINT</div>
-            <h1>
-              Small prompt.
-              <br />
+            <h2 className="prompt-heading">
+              Small prompt. <br />
               New possibilities.
-            </h1>
+            </h2>
             <p className="intro">
               Turn a starting idea into a UI you can explore, edit, and make
               your own.
@@ -182,7 +213,7 @@ export default function App() {
                     );
                   }}
                 >
-                  <span>{["↳", "◫", "▤", "✉"][index]}</span>
+                  <span aria-hidden="true">{["↳", "◫", "▤", "✉"][index]}</span>
                   {
                     [
                       "Login form",
@@ -191,7 +222,7 @@ export default function App() {
                       "Contact form",
                     ][index]
                   }
-                  <span>↗</span>
+                  <span aria-hidden="true">↗</span>
                 </button>
               ))}
             </div>
@@ -212,20 +243,28 @@ export default function App() {
             <small>Saved locally after each change.</small>
           </div>
         </aside>
-        <section className="canvas-panel">
+        <section className="canvas-panel" ref={canvasRef} aria-label="Canvas">
           <div className="canvas-toolbar">
-            <div className="tabs">
+            <div className="tabs" role="group" aria-label="Canvas views">
               {(["preview", "json", "react"] as const).map((item) => (
                 <button
                   key={item}
                   className={tab === item ? "active" : ""}
-                  onClick={() => setTab(item)}
+                  aria-pressed={tab === item}
+                  onClick={() => changeTab(item)}
                 >
+                  <span aria-hidden="true">
+                    {item === "preview"
+                      ? "◫ "
+                      : item === "json"
+                        ? "{ } "
+                        : "〈〉 "}
+                  </span>
                   {item === "preview"
-                    ? "◫ Preview"
+                    ? "Preview"
                     : item === "json"
-                      ? "{ } JSON"
-                      : "〈〉 React"}
+                      ? "JSON"
+                      : "React"}
                 </button>
               ))}
             </div>
@@ -305,6 +344,7 @@ export default function App() {
                   </button>
                 </div>
                 <pre
+                  tabIndex={0}
                   aria-label={
                     tab === "json" ? "Design JSON" : "React component"
                   }
@@ -316,13 +356,15 @@ export default function App() {
             )}
           </div>
           <footer className="canvas-footer">
-            <span>◈ IR is the source of truth</span>
+            <span>
+              <span aria-hidden="true">◈ </span>IR is the source of truth
+            </span>
             <span>5 components · Safe by design</span>
           </footer>
         </section>
-        <aside className="inspector-panel">
+        <aside className="inspector-panel" aria-label="Inspector">
           <div className="inspector-heading">
-            Inspector<span>⚙</span>
+            Inspector<span aria-hidden="true">⚙</span>
           </div>
           <Inspector
             design={design}
@@ -352,7 +394,7 @@ export default function App() {
                 )
               }
             >
-              Download design JSON <span>↓</span>
+              Download design JSON <span aria-hidden="true">↓</span>
             </button>
           </div>
         </aside>

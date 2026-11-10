@@ -134,7 +134,7 @@ export function GenerationForm({
             : mode === "samples"
               ? "Generate sample"
               : "Generate with AI"}
-          <span>↗</span>
+          <span aria-hidden="true">↗</span>
         </button>
         {loading && (
           <button type="button" className="cancel-generation" onClick={cancel}>
@@ -149,7 +149,7 @@ export function GenerationForm({
         </p>
       )}
       <p className="generator-note">
-        <span>◈</span>
+        <span aria-hidden="true">◈</span>
         {mode === "samples"
           ? "Deterministic sample generator. No AI call or API key needed."
           : "AI generates JSON only. Every result is validated before it replaces your design."}

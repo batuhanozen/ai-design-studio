@@ -29,10 +29,11 @@ The roadmap was written before application code, with every item marked **planne
 - **implemented and verified**: Collapsible component tree, shared selection, parent/child navigation and tree keyboard controls.
 - **implemented and verified**: All existing properties/configurations, insertion/removal of the five supported types, sibling reordering and valid reparenting through pure schema-validated operations.
 - **implemented and verified**: Undo/redo for edits and design replacements, selection recovery, branch semantics, 40-entry / 4 MiB serialized shared history bounds and keyboard shortcuts.
-- **implemented and event-tested**: Native tree drag/drop, stationary before/inside/after targets, validation feedback, rejection of external payloads and keyboard move alternatives. A reliable native pointer-drop completion was not established by browser automation; cross-browser/touch verification remains open.
+- **implemented and event-tested**: Native tree drag/drop, stationary before/inside/after targets, validation feedback, rejection of external payloads and keyboard move alternatives. Real-mouse drop completion was later verified in Chromium (see POLISH-PASS); cross-browser/touch verification remains open.
 - **implemented and verified offline**: Safe provider error classification, refusal/incomplete-response handling, workspace-revision cancellation and rejection of late AI results.
 - **implemented and verified**: Security-driven Zod 4.6.7 upgrade, native schema catalog export, unchanged IR v1 and preserved diagnostic codes. All previous test cases retained.
 - **planned beyond this requested workspace scope**: Additional component types and responsive variants with schema/migration/export coverage.
+- **implemented and verified (polish pass, 2026-11-10)**: Real-mouse drag/drop completion, accessibility contrast/landmark fixes and mobile result visibility; see [POLISH-PASS](POLISH-PASS.md). Touch and cross-browser audits remain open.
 - Exit: All accepted edit/history states remain valid and the complete verification suite passes. Live AI compatibility and browser/device/accessibility audits remain explicitly unverified.
 - Non-goals: authentication, collaboration, billing, database, additional providers, plugins, animations, generated breakpoints, production deployment or chat editing.
 
